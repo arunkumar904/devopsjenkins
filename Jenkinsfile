@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        PROJECT_ID = 'groovy-legacy-434014-d0'
-        REGION = 'us-central1'
-        REPO_NAME = 'my-repo'
-        IMAGE_NAME = 'fullstack-app'
-        SERVICE_ACCOUNT_KEY = credentials('gcp-credentials-id')  // Jenkins credentials
-        DOCKER_IMAGE_TAG = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${env.BUILD_ID}"
+        PROJECT_ID = 'groovy-legacy-434014-d0'          // Your Google Cloud project ID
+        REGION = 'us-central1'                        // Your region
+        REPO_NAME = 'my-repo'                          // Your Artifact Registry repository name
+        IMAGE_NAME = 'fullstack-app'                   // Your Docker image name
+        SERVICE_ACCOUNT_KEY = credentials('gcp-credentials-id')  // Jenkins credential ID
+        DOCKER_IMAGE_TAG = "us-central1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${env.BUILD_ID}"
     }
 
     stages {
@@ -43,7 +43,7 @@ pipeline {
                 echo 'Authenticating with Google Cloud...'
                 sh """
                     echo "${SERVICE_ACCOUNT_KEY}" | gcloud auth activate-service-account --key-file=-
-                    gcloud auth configure-docker ${REGION}-docker.pkg.dev
+                    gcloud auth configure-docker us-central1-docker.pkg.dev
                 """
             }
         }
@@ -81,4 +81,3 @@ pipeline {
         }
     }
 }
-
