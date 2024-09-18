@@ -19,11 +19,12 @@ pipeline {
         stage('Authenticate with Google Cloud') {
             steps {
                 script {
-                    // Authenticate with Google Cloud
-                    sh 'echo ${SERVICE_ACCOUNT_KEY} | base64 --decode > /tmp/gcp-key.json'
-                    sh 'gcloud auth activate-service-account --key-file=/tmp/gcp-key.json'
-                    sh 'gcloud config set project ${PROJECT_ID}'
-                    sh 'gcloud auth configure-docker us-central1-docker.pkg.dev'
+                    // Use Jenkins credentials plugin to handle service account key
+                    withCredentials([file(credentialsId: SERVICE_ACCOUNT_KEY, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                        sh 'gcloud config set project ${PROJECT_ID}'
+                        sh 'gcloud auth configure-docker us-central1-docker.pkg.dev'
+                    }
                 }
             }
         }
