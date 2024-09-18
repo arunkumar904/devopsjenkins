@@ -1,30 +1,34 @@
-# Stage 1: Build frontend
+# Dockerfile
+
+# Stage 1: Build the frontend
 FROM node:16 AS build-frontend
 
 WORKDIR /app/frontend
-
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
-
 COPY frontend/public ./public
 COPY frontend/src ./src
-
 RUN npm run build
 
 # Stage 2: Set up the Python backend
-FROM python:3.9
+FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt ./backend/
+# Copy frontend build files
+COPY --from=build-frontend /app/frontend/build ./frontend/build
+
+# Copy backend code
+COPY backend/ ./backend/
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-COPY backend /app/backend
-COPY --from=build-frontend /app/frontend/build /app/frontend/build
+# Expose the port Cloud Run expects
+EXPOSE 8080
 
-WORKDIR /app/backend
+# Set environment variable for port
+ENV PORT=8080
 
-EXPOSE 80
-
-# Use Gunicorn to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "app:app"]
+# Command to run the application
+CMD ["python", "backend/app.py"]
