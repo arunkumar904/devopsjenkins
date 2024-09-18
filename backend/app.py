@@ -1,0 +1,21 @@
+from flask import Flask, jsonify, send_from_directory
+import os
+
+app = Flask(__name__, static_folder='../frontend/build')
+
+# Serve the React frontend
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
+# API endpoint
+@app.route('/api/hello')
+def hello_world():
+    return jsonify(message="Hello from the Python backend!")
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
