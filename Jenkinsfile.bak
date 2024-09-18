@@ -6,7 +6,7 @@ pipeline {
         REGION = 'us-central1'
         REPO_NAME = 'my-repo'
         IMAGE_NAME = 'fullstack-app'
-        SERVICE_ACCOUNT_KEY = credentials('gcp-credentials-id')  // Jenkins credentials
+        SERVICE_ACCOUNT_KEY = credentials('GCP_SERVICE_ACCOUNT_KEY')  // Jenkins credentials
         DOCKER_IMAGE_TAG = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${env.BUILD_ID}"
     }
 
