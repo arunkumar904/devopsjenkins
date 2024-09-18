@@ -24,7 +24,5 @@ COPY --from=build-frontend /app/frontend/build /app/frontend/build
 
 WORKDIR /app/backend
 
-EXPOSE 80
-
 # Use Gunicorn to run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:80", "app:app"]

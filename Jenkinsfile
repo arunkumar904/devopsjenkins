@@ -1,83 +1,73 @@
 pipeline {
     agent any
-
+    
     environment {
-        PROJECT_ID = 'groovy-legacy-434014-d0'          // Your Google Cloud project ID
-        REGION = 'us-central1'                        // Your region
-        REPO_NAME = 'my-repo'                          // Your Artifact Registry repository name
-        IMAGE_NAME = 'fullstack-app'                   // Your Docker image name
-        SERVICE_ACCOUNT_KEY = credentials('gcp-credentials-id')  // Jenkins credential ID
-        DOCKER_IMAGE_TAG = "us-central1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${env.BUILD_ID}"
+        PROJECT_ID = 'groovy-legacy-434014-d0'  // Replace with your Google Cloud project ID
+        REGION = 'us-central1'                  // Replace with your desired region
+        REPO_NAME = 'my-repo'                    // Replace with your Artifact Registry repository name
+        IMAGE_NAME = 'fullstack-app'            // Replace with your Docker image name
+        SERVICE_ACCOUNT_KEY = 'GCP_SERVICE_ACCOUNT_KEY' // Jenkins secret ID for the service account key
     }
-
+    
     stages {
-        stage('Install Frontend Dependencies') {
+        stage('Checkout') {
             steps {
-                dir('frontend') {
-                    echo 'Installing frontend dependencies...'
-                    sh 'npm install'
-                }
+                checkout scm
             }
         }
-
-        stage('Install Backend Dependencies') {
+        
+        stage('Authenticate with Google Cloud') {
             steps {
-                dir('backend') {
-                    echo 'Installing backend dependencies...'
-                    sh 'pip install -r requirements.txt'
+                script {
+                    // Authenticate with Google Cloud
+                    sh 'echo ${SERVICE_ACCOUNT_KEY} | base64 --decode > /tmp/gcp-key.json'
+                    sh 'gcloud auth activate-service-account --key-file=/tmp/gcp-key.json'
+                    sh 'gcloud config set project ${PROJECT_ID}'
+                    sh 'gcloud auth configure-docker us-central1-docker.pkg.dev'
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh """
-                    docker build -t ${DOCKER_IMAGE_TAG} .
-                """
+                script {
+                    // Build Docker image
+                    sh 'docker build -t ${IMAGE_NAME}:latest .'
+                }
             }
         }
-
-        stage('Authenticate with GCP') {
+        
+        stage('Tag Docker Image') {
             steps {
-                echo 'Authenticating with Google Cloud...'
-                sh """
-                    echo "${SERVICE_ACCOUNT_KEY}" | gcloud auth activate-service-account --key-file=-
-                    gcloud auth configure-docker us-central1-docker.pkg.dev
-                """
+                script {
+                    // Tag Docker image
+                    sh "docker tag ${IMAGE_NAME}:latest us-central1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
+                }
             }
         }
-
-        stage('Push Docker Image to Artifact Registry') {
+        
+        stage('Push Docker Image') {
             steps {
-                echo 'Pushing Docker image to Google Artifact Registry...'
-                sh """
-                    docker push ${DOCKER_IMAGE_TAG}
-                """
+                script {
+                    // Push Docker image to Google Artifact Registry
+                    sh "docker push us-central1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
+                }
             }
         }
-
+        
         stage('Deploy to Cloud Run') {
             steps {
-                echo 'Deploying to Cloud Run...'
-                sh """
-                    gcloud run deploy ${IMAGE_NAME}-service \
-                        --image ${DOCKER_IMAGE_TAG} \
-                        --platform managed \
-                        --region ${REGION} \
-                        --allow-unauthenticated \
-                        --service-account my-service-account@${PROJECT_ID}.iam.gserviceaccount.com
-                """
+                script {
+                    // Deploy Docker image to Google Cloud Run
+                    sh "gcloud run deploy ${IMAGE_NAME} --image us-central1-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest --region ${REGION} --platform managed --allow-unauthenticated"
+                }
             }
         }
     }
 
     post {
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Deployment failed.'
+        always {
+            cleanWs()
         }
     }
 }
