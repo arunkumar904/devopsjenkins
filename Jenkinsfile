@@ -6,7 +6,7 @@ pipeline {
         REGION = 'us-central1'                  // Replace with your desired region
         REPO_NAME = 'my-repo'                    // Replace with your Artifact Registry repository name
         IMAGE_NAME = 'fullstack-app'            // Replace with your Docker image name
-        SERVICE_ACCOUNT_KEY = 'GCP_SERVICE_ACCOUNT_KEY' // Jenkins secret ID for the service account key
+        SERVICE_ACCOUNT_KEY = 'gcp-credentials-id' // Jenkins secret ID for the service account key
     }
     
     stages {
