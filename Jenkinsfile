@@ -56,16 +56,7 @@ pipeline {
             }
         }
         
-        stage('Clean Up Old Images') {
-            steps {
-                script {
-                    // Get the ID of the latest image and remove other images
-                    def latestImageId = sh(script: "docker images -q ${IMAGE_NAME}:latest", returnStdout: true).trim()
-                    sh "docker images -q | grep -v ${latestImageId} | xargs docker rmi -f"
-                }
-            }
-        }
-        
+       
         stage('Deploy to Cloud Run') {
             steps {
                 script {
