@@ -59,8 +59,9 @@ pipeline {
         stage('Clean Up Old Images') {
             steps {
                 script {
-                    // Remove old Docker images, keeping only the latest one
-                    sh "docker images -q | grep -v $(docker images -q ${IMAGE_NAME}:latest) | xargs docker rmi -f"
+                    // Get the ID of the latest image and remove other images
+                    def latestImageId = sh(script: "docker images -q ${IMAGE_NAME}:latest", returnStdout: true).trim()
+                    sh "docker images -q | grep -v ${latestImageId} | xargs docker rmi -f"
                 }
             }
         }
